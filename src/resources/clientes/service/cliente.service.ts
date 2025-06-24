@@ -10,16 +10,20 @@ export class ClienteService {
     private clienteRepository: Repository<Cliente>,
   ) {}
 
-  create(data: Partial<Cliente>) {
+  async create(data: Partial<Cliente>) {
     const cliente = this.clienteRepository.create(data);
-    return this.clienteRepository.save(cliente);
+    const salvo = await this.clienteRepository.save(cliente);
+    return {
+      message: 'Cliente cadastrado com sucesso.',
+      cliente: salvo,
+    };
   }
 
-  findById(id: number) {
-    return this.clienteRepository.findOneBy({ id });
+  async findById(id: number) {
+    return await this.clienteRepository.findOneBy({ id });
   }
 
-  findByCpf(cpf: string) {
-    return this.clienteRepository.findOneBy({ cpf });
+  async findByCpf(cpf: string) {
+    return await this.clienteRepository.findOneBy({ cpf });
   }
 }
