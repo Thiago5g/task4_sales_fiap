@@ -1,5 +1,5 @@
-import { Cliente } from 'src/resources/clients/entity/cliente.entity';
-import { Veiculo } from 'src/resources/vehicles/entity/veiculo.entity';
+import { Cliente } from 'src/resources/clientes/entity/cliente.entity';
+import { Veiculo } from 'src/resources/veiculos/entity/veiculo.entity';
 import {
   Entity,
   PrimaryGeneratedColumn,

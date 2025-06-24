@@ -5,12 +5,12 @@ import {
 } from '@nestjs/common';
 import * as bcrypt from 'bcryptjs';
 import { JwtService } from '@nestjs/jwt';
-import { UserService } from 'src/resources/users/service/user.service';
+import { UsuarioService } from 'src/resources/usuarios/service/usuario.service';
 
 @Injectable()
 export class AuthService {
   constructor(
-    private readonly userService: UserService,
+    private readonly userService: UsuarioService,
     private readonly jwtService: JwtService,
   ) {}
 

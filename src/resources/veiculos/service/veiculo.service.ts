@@ -10,30 +10,39 @@ export class VeiculoService {
     private veiculoRepo: Repository<Veiculo>,
   ) {}
 
-  async criarveiculo(data: Partial<Veiculo>) {
+  async criarVeiculo(data: Partial<Veiculo>) {
     const veiculo = this.veiculoRepo.create({
       ...data,
       status: VeiculoStatus.DISPONIVEL,
     });
-    return this.veiculoRepo.save(veiculo);
+    const salvo = await this.veiculoRepo.save(veiculo);
+    return {
+      message: 'Veículo cadastrado com sucesso.',
+      veiculo: salvo,
+    };
   }
-
-  async editarveiculo(id: number, data: Partial<Veiculo>) {
+  
+  async editarVeiculo(id: number, data: Partial<Veiculo>) {
     const veiculo = await this.veiculoRepo.findOneBy({ id });
     if (!veiculo) throw new NotFoundException('Veículo não encontrado');
+  
     Object.assign(veiculo, data);
-    return this.veiculoRepo.save(veiculo);
+    const atualizado = await this.veiculoRepo.save(veiculo);
+    return {
+      message: 'Veículo atualizado com sucesso.',
+      veiculo: atualizado,
+    };
   }
 
-  listarDisponiveis() {
-    return this.veiculoRepo.find({
+  async listarDisponiveis() {
+    return await this.veiculoRepo.find({
       where: { status: VeiculoStatus.DISPONIVEL },
       order: { preco: 'ASC' },
     });
   }
 
-  listarVendidos() {
-    return this.veiculoRepo.find({
+  async listarVendidos() {
+    return await this.veiculoRepo.find({
       where: { status: VeiculoStatus.VENDIDO },
       order: { preco: 'ASC' },
     });

@@ -22,7 +22,7 @@ export class VeiculoController {
   @ApiOperation({ summary: 'Criar um novo veículo' })
   @ApiBody({ type: CreateVeiculoDto })
   criar(@Body() body: CreateVeiculoDto) {
-    return this.veiculoService.criarveiculo(body);
+    return this.veiculoService.criarVeiculo(body);
   }
 
   @Put(':id')
@@ -30,7 +30,7 @@ export class VeiculoController {
   @ApiParam({ name: 'id', type: Number })
   @ApiBody({ type: UpdateVeiculoDto })
   editar(@Param('id', ParseIntPipe) id: number, @Body() body: UpdateVeiculoDto) {
-    return this.veiculoService.editarveiculo(id, body);
+    return this.veiculoService.editarVeiculo(id, body);
   }
 
   @Get('disponiveis')

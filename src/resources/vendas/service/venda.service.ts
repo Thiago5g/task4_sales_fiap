@@ -6,11 +6,11 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Venda } from '../entity/venda.entity';
-import { Cliente } from 'src/resources/clients/entity/cliente.entity';
+import { Cliente } from 'src/resources/clientes/entity/cliente.entity';
 import {
   VeiculoStatus,
   Veiculo,
-} from 'src/resources/vehicles/entity/veiculo.entity';
+} from 'src/resources/veiculos/entity/veiculo.entity';
 
 @Injectable()
 export class VendaService {
@@ -25,17 +25,22 @@ export class VendaService {
 
   async realizarVenda(cpf: string, veiculoId: number) {
     const cliente = await this.clienteRepo.findOneBy({ cpf });
-    if (!cliente) throw new NotFoundException('cliente não encontrado');
-
+    if (!cliente) throw new NotFoundException('Cliente não encontrado');
+  
     const veiculo = await this.veiculoRepo.findOneBy({ id: veiculoId });
     if (!veiculo) throw new NotFoundException('Veículo não encontrado');
     if (veiculo.status === VeiculoStatus.VENDIDO)
       throw new BadRequestException('Veículo já foi vendido');
-
+  
     veiculo.status = VeiculoStatus.VENDIDO;
     await this.veiculoRepo.save(veiculo);
-
-    const Venda = this.VendaRepo.create({ veiculo, cliente });
-    return this.VendaRepo.save(Venda);
+  
+    const venda = this.VendaRepo.create({ veiculo, cliente });
+    const vendaSalva = await this.VendaRepo.save(venda);
+  
+    return {
+      message: 'Venda efetuada com sucesso.',
+      venda: vendaSalva,
+    };
   }
 }

@@ -6,10 +6,10 @@ import { APP_GUARD } from '@nestjs/core';
 import { JwtStrategy } from './resources/auth/jwt-passport/jwt-strategy';
 import { JwtAuthGuard } from './resources/auth/jwt-passport/jwt-auth.guard';
 import { ConfigModule } from '@nestjs/config';
-import { ClienteModule } from './resources/clients/cliente.module';
-import { VeiculoModule } from './resources/vehicles/veiculo.module';
-import { VendaModule } from './resources/purshases/venda.module';
-import { UserModule } from './resources/users/user.module';
+import { ClienteModule } from './resources/clientes/cliente.module';
+import { VeiculoModule } from './resources/veiculos/veiculo.module';
+import { VendaModule } from './resources/vendas/venda.module';
+import { UsuarioModule } from './resources/usuarios/usuario.module';
 
 @Module({
   controllers: [AppController],
@@ -25,7 +25,7 @@ import { UserModule } from './resources/users/user.module';
     ClienteModule,
     VeiculoModule,
     VendaModule,
-    UserModule
+    UsuarioModule
   ],
   providers: [
     JwtStrategy,

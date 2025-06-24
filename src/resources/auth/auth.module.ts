@@ -2,15 +2,15 @@ import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { AuthController } from './controller/auth.controller';
 import { AuthService } from './service/auth.service';
-// import { UserModule } from '../users/user.module';
+// import { UsuarioModule } from '../users/user.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { UserModule } from '../users/user.module';
+import { UsuarioModule } from '../usuarios/usuario.module';
 
 @Module({
   imports: [
-    UserModule,
+    UsuarioModule,
     ConfigModule, 
-    // UserModule,
+    // UsuarioModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => ({
