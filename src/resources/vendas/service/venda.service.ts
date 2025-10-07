@@ -1,46 +1,44 @@
-import {
-  Injectable,
-  NotFoundException,
-  BadRequestException,
-} from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Venda } from '../entity/venda.entity';
-import { Cliente } from 'src/resources/clientes/entity/cliente.entity';
-import {
-  VeiculoStatus,
-  Veiculo,
-} from 'src/resources/veiculos/entity/veiculo.entity';
 
 @Injectable()
 export class VendaService {
   constructor(
     @InjectRepository(Venda)
     private VendaRepo: Repository<Venda>,
-    @InjectRepository(Cliente)
-    private clienteRepo: Repository<Cliente>,
-    @InjectRepository(Veiculo)
-    private veiculoRepo: Repository<Veiculo>,
   ) {}
 
-  async realizarVenda(cpf: string, veiculoId: number) {
-    const cliente = await this.clienteRepo.findOneBy({ cpf });
-    if (!cliente) throw new NotFoundException('Cliente não encontrado');
-  
-    const veiculo = await this.veiculoRepo.findOneBy({ id: veiculoId });
-    if (!veiculo) throw new NotFoundException('Veículo não encontrado');
-    if (veiculo.status === VeiculoStatus.VENDIDO)
-      throw new BadRequestException('Veículo já foi vendido');
-  
-    veiculo.status = VeiculoStatus.VENDIDO;
-    await this.veiculoRepo.save(veiculo);
-  
-    const venda = this.VendaRepo.create({ veiculo, cliente });
+  async realizarVenda(clienteId: number, veiculoId: number, preco: number) {
+    console.log(clienteId, 'clienteId');
+    const venda = this.VendaRepo.create({ veiculoId, clienteId, preco } as any);
     const vendaSalva = await this.VendaRepo.save(venda);
-  
+
     return {
       message: 'Venda efetuada com sucesso.',
       venda: vendaSalva,
     };
+  }
+  async listarVendas() {
+    const vendas = await this.VendaRepo.find();
+    return vendas;
+  }
+
+  async obterVendaPorVeiculoId(veiculoId: number) {
+    const venda = await this.VendaRepo.findOne({ where: { veiculoId } });
+    if (!venda) {
+      throw new NotFoundException('Venda não encontrada para este veículo.');
+    }
+    return venda;
+  }
+
+  async excluirVenda(id: number) {
+    const venda = await this.VendaRepo.findOne({ where: { id } });
+    if (!venda) {
+      throw new NotFoundException('Venda não encontrada.');
+    }
+    await this.VendaRepo.remove(venda);
+    return { message: 'Venda excluída com sucesso.' };
   }
 }
