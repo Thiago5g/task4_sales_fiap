@@ -137,10 +137,14 @@ Este microserviço não faz autenticação local. Assume validação a nível de
 
 ---
 
+
 ## ♻️ Idempotência
 Chamadas repetidas de PATCH com mesmo `statusPagamento` apenas retornam mensagem de "Nenhuma mudança" e preservam timestamps.
 
----
+- **vendas**: processamento de vendas — registra a transação - atualiza status do pagamento.
+ - **vendas**: listagens das vendas.
+  - **vendas**: obter a venda de um veiculo pele ID.
+
 
 ## 🧩 Código de Pagamento
 Gerado determinística e sequencialmente (`PAY-<contador>-<HEX>`). Implementado em `src/common/utils/gerar-codigo-pagamento.ts`.
@@ -177,7 +181,10 @@ Variáveis úteis:
 - Publicar imagem Docker.
 - Circuit breaker / retries para callbacks externos (se houver integração futura).
 
----
-
 ## 📄 Licença
 Uso educacional / acadêmico.
+
+1. Clone este repositório.
+2. Instale dependências com `npm install`.
+3. Rode a aplicação com `npm run start:dev`.
+
