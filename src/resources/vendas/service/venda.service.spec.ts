@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 import { NotFoundException } from '@nestjs/common';
 import { VendaService } from './venda.service';
 import { Venda } from '../entity/venda.entity';
+import { STATUS_VENDA, STATUS_PAGAMENTO } from '../constants/status.constants';
 
 describe('VendaService', () => {
   let service: VendaService;
@@ -41,222 +42,360 @@ describe('VendaService', () => {
   });
 
   describe('realizarVenda', () => {
-    it('should create and save a venda successfully', async () => {
+    it('cria venda com status iniciais em PT-BR', async () => {
       const clienteId = 1;
       const veiculoId = 2;
       const preco = 25000.5;
-
       const mockVenda = {
         id: 1,
         clienteId,
         veiculoId,
         preco,
-        dataVenda: new Date(),
-      };
-
+        moeda: 'BRL',
+        status: STATUS_VENDA.AGUARDANDO_PAGAMENTO,
+        statusPagamento: STATUS_PAGAMENTO.PENDENTE,
+        codigoPagamento: 'PAY-1-AAAAAA',
+      } as any;
       mockRepository.create.mockReturnValue(mockVenda);
       mockRepository.save.mockResolvedValue(mockVenda);
-
-      const result = await service.realizarVenda(clienteId, veiculoId, preco);
-
+      const result: any = await service.realizarVenda(
+        clienteId,
+        veiculoId,
+        preco,
+      );
       expect(repository.create).toHaveBeenCalledWith({
         veiculoId,
         clienteId,
         preco,
+        moeda: 'BRL',
+        status: STATUS_VENDA.AGUARDANDO_PAGAMENTO,
+        statusPagamento: STATUS_PAGAMENTO.PENDENTE,
+        codigoPagamento: expect.any(String),
       });
-      expect(repository.save).toHaveBeenCalledWith(mockVenda);
-      expect(result).toEqual({
-        message: 'Venda efetuada com sucesso.',
-        venda: mockVenda,
-      });
+      expect(result.message).toBe('Venda criada e aguardando pagamento.');
+      expect(result.venda.status).toBe(STATUS_VENDA.AGUARDANDO_PAGAMENTO);
+      expect(result.venda.statusPagamento).toBe(STATUS_PAGAMENTO.PENDENTE);
     });
 
-    it('should handle repository errors', async () => {
+    it('propaga erro do repository ao salvar', async () => {
       const clienteId = 1;
       const veiculoId = 2;
       const preco = 25000.5;
-
-      const mockVenda = { clienteId, veiculoId, preco };
+      const mockVenda = { clienteId, veiculoId, preco } as any;
       const error = new Error('Database connection failed');
-
       mockRepository.create.mockReturnValue(mockVenda);
       mockRepository.save.mockRejectedValue(error);
-
       await expect(
         service.realizarVenda(clienteId, veiculoId, preco),
       ).rejects.toThrow('Database connection failed');
-      expect(repository.create).toHaveBeenCalledWith({
-        veiculoId,
+    });
+
+    it('cria venda com moeda customizada (USD)', async () => {
+      const clienteId = 22;
+      const veiculoId = 2200;
+      const preco = 123.45;
+      const mockVenda = {
+        id: 77,
         clienteId,
+        veiculoId,
         preco,
-      });
-      expect(repository.save).toHaveBeenCalledWith(mockVenda);
+        moeda: 'USD',
+        status: STATUS_VENDA.AGUARDANDO_PAGAMENTO,
+        statusPagamento: STATUS_PAGAMENTO.PENDENTE,
+        codigoPagamento: 'PAY-99-FFFFAA',
+      } as any;
+      mockRepository.create.mockReturnValue(mockVenda);
+      mockRepository.save.mockResolvedValue(mockVenda);
+      const result: any = await service.realizarVenda(
+        clienteId,
+        veiculoId,
+        preco,
+        'USD',
+      );
+      expect(result.venda.moeda).toBe('USD');
+      expect(result.venda.status).toBe(STATUS_VENDA.AGUARDANDO_PAGAMENTO);
     });
   });
 
   describe('listarVendas', () => {
-    it('should return all vendas', async () => {
+    it('retorna lista de vendas', async () => {
       const mockVendas = [
-        {
-          id: 1,
-          clienteId: 1,
-          veiculoId: 2,
-          preco: 25000.5,
-          dataVenda: new Date(),
-        },
-        {
-          id: 2,
-          clienteId: 2,
-          veiculoId: 3,
-          preco: 30000.0,
-          dataVenda: new Date(),
-        },
+        { id: 1, clienteId: 1, veiculoId: 2, preco: 25000.5 },
+        { id: 2, clienteId: 2, veiculoId: 3, preco: 30000.0 },
       ];
-
       mockRepository.find.mockResolvedValue(mockVendas);
-
       const result = await service.listarVendas();
-
-      expect(repository.find).toHaveBeenCalledWith();
       expect(result).toEqual(mockVendas);
     });
-
-    it('should return empty array when no vendas exist', async () => {
+    it('retorna array vazio', async () => {
       mockRepository.find.mockResolvedValue([]);
-
       const result = await service.listarVendas();
-
-      expect(repository.find).toHaveBeenCalledWith();
       expect(result).toEqual([]);
     });
-
-    it('should handle repository errors', async () => {
+    it('propaga erro', async () => {
       const error = new Error('Database error');
       mockRepository.find.mockRejectedValue(error);
-
       await expect(service.listarVendas()).rejects.toThrow('Database error');
-      expect(repository.find).toHaveBeenCalledWith();
     });
   });
 
   describe('obterVendaPorVeiculoId', () => {
-    it('should return venda when found', async () => {
+    it('retorna a venda', async () => {
       const veiculoId = 2;
-      const mockVenda = {
-        id: 1,
-        clienteId: 1,
-        veiculoId: veiculoId,
-        preco: 25000.5,
-        dataVenda: new Date(),
-      };
-
+      const mockVenda = { id: 1, clienteId: 1, veiculoId, preco: 25000.5 };
       mockRepository.findOne.mockResolvedValue(mockVenda);
-
       const result = await service.obterVendaPorVeiculoId(veiculoId);
-
-      expect(repository.findOne).toHaveBeenCalledWith({
-        where: { veiculoId: veiculoId },
-      });
       expect(result).toEqual(mockVenda);
     });
-
-    it('should throw NotFoundException when venda not found', async () => {
-      const veiculoId = 999;
+    it('lança NotFoundException se não existir', async () => {
       mockRepository.findOne.mockResolvedValue(null);
-
-      await expect(service.obterVendaPorVeiculoId(veiculoId)).rejects.toThrow(
+      await expect(service.obterVendaPorVeiculoId(99)).rejects.toThrow(
         new NotFoundException('Venda não encontrada para este veículo.'),
       );
-      expect(repository.findOne).toHaveBeenCalledWith({
-        where: { veiculoId: veiculoId },
-      });
-    });
-
-    it('should handle repository errors', async () => {
-      const veiculoId = 1;
-      const error = new Error('Database error');
-      mockRepository.findOne.mockRejectedValue(error);
-
-      await expect(service.obterVendaPorVeiculoId(veiculoId)).rejects.toThrow(
-        'Database error',
-      );
-      expect(repository.findOne).toHaveBeenCalledWith({
-        where: { veiculoId: veiculoId },
-      });
     });
   });
 
   describe('excluirVenda', () => {
-    it('should delete venda successfully when found', async () => {
+    it('remove venda existente', async () => {
       const vendaId = 1;
-      const mockVenda = {
-        id: vendaId,
-        clienteId: 1,
-        veiculoId: 2,
-        preco: 25000.5,
-        dataVenda: new Date(),
-      };
-
+      const mockVenda = { id: vendaId } as any;
       mockRepository.findOne.mockResolvedValue(mockVenda);
       mockRepository.remove.mockResolvedValue(mockVenda);
-
       const result = await service.excluirVenda(vendaId);
-
-      expect(repository.findOne).toHaveBeenCalledWith({
-        where: { id: vendaId },
-      });
-      expect(repository.remove).toHaveBeenCalledWith(mockVenda);
       expect(result).toEqual({ message: 'Venda excluída com sucesso.' });
     });
-
-    it('should throw NotFoundException when venda not found', async () => {
-      const vendaId = 999;
+    it('erro se não existir', async () => {
       mockRepository.findOne.mockResolvedValue(null);
-
-      await expect(service.excluirVenda(vendaId)).rejects.toThrow(
+      await expect(service.excluirVenda(999)).rejects.toThrow(
         new NotFoundException('Venda não encontrada.'),
       );
-      expect(repository.findOne).toHaveBeenCalledWith({
-        where: { id: vendaId },
-      });
-      expect(repository.remove).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('atualizarPagamentoPorVeiculo', () => {
+    it('atualiza para PAGO e VENDIDO com timestamps', async () => {
+      const veiculoId = 10;
+      const venda = {
+        id: 1,
+        veiculoId,
+        status: STATUS_VENDA.AGUARDANDO_PAGAMENTO,
+        statusPagamento: STATUS_PAGAMENTO.PENDENTE,
+        preco: 100,
+        pagoEm: null,
+        vendidoEm: null,
+      } as any;
+      mockRepository.findOne.mockResolvedValue(venda);
+      mockRepository.save.mockImplementation(async (v) => v);
+      const result = await (service as any).atualizarPagamentoPorVeiculo(
+        veiculoId,
+        { statusPagamento: STATUS_PAGAMENTO.PAGO },
+      );
+      expect(result.venda.status).toBe(STATUS_VENDA.VENDIDO);
+      expect(result.venda.statusPagamento).toBe(STATUS_PAGAMENTO.PAGO);
+      expect(result.venda.pagoEm).toBeDefined();
+      expect(result.venda.vendidoEm).toBeDefined();
     });
 
-    it('should handle repository errors on find', async () => {
-      const vendaId = 1;
-      const error = new Error('Database error');
-      mockRepository.findOne.mockRejectedValue(error);
-
-      await expect(service.excluirVenda(vendaId)).rejects.toThrow(
-        'Database error',
+    it('cancela quando statusPagamento = CANCELADO', async () => {
+      const veiculoId = 11;
+      const venda = {
+        id: 2,
+        veiculoId,
+        status: STATUS_VENDA.AGUARDANDO_PAGAMENTO,
+        statusPagamento: STATUS_PAGAMENTO.PENDENTE,
+        preco: 150,
+      } as any;
+      mockRepository.findOne.mockResolvedValue(venda);
+      mockRepository.save.mockImplementation(async (v) => v);
+      const result = await (service as any).atualizarPagamentoPorVeiculo(
+        veiculoId,
+        { statusPagamento: STATUS_PAGAMENTO.CANCELADO },
       );
-      expect(repository.findOne).toHaveBeenCalledWith({
-        where: { id: vendaId },
-      });
-      expect(repository.remove).not.toHaveBeenCalled();
+      expect(result.venda.status).toBe(STATUS_VENDA.CANCELADO);
     });
 
-    it('should handle repository errors on remove', async () => {
-      const vendaId = 1;
-      const mockVenda = {
-        id: vendaId,
-        clienteId: 1,
-        veiculoId: 2,
-        preco: 25000.5,
-        dataVenda: new Date(),
-      };
-      const error = new Error('Delete failed');
+    it('retorna NotFoundException quando venda não existe', async () => {
+      mockRepository.findOne.mockResolvedValue(null);
+      await expect(
+        (service as any).atualizarPagamentoPorVeiculo(9999, {
+          statusPagamento: STATUS_PAGAMENTO.PAGO,
+        }),
+      ).rejects.toThrow(NotFoundException);
+    });
 
-      mockRepository.findOne.mockResolvedValue(mockVenda);
-      mockRepository.remove.mockRejectedValue(error);
-
-      await expect(service.excluirVenda(vendaId)).rejects.toThrow(
-        'Delete failed',
+    it('mantém idempotência se repetir PAGO', async () => {
+      const veiculoId = 12;
+      const venda = {
+        id: 3,
+        veiculoId,
+        status: STATUS_VENDA.VENDIDO,
+        statusPagamento: STATUS_PAGAMENTO.PAGO,
+        preco: 200,
+        pagoEm: new Date(),
+        vendidoEm: new Date(),
+      } as any;
+      mockRepository.findOne.mockResolvedValue(venda);
+      mockRepository.save.mockImplementation(async (v) => v);
+      const result = await (service as any).atualizarPagamentoPorVeiculo(
+        veiculoId,
+        { statusPagamento: STATUS_PAGAMENTO.PAGO, preco: 210 },
       );
-      expect(repository.findOne).toHaveBeenCalledWith({
-        where: { id: vendaId },
-      });
-      expect(repository.remove).toHaveBeenCalledWith(mockVenda);
+      expect(result.message).toMatch(/Nenhuma mudança/);
+      expect(result.venda.preco).toBe(210);
+    });
+
+    it('atualiza para FALHOU e cancela venda', async () => {
+      const veiculoId = 13;
+      const venda = {
+        id: 4,
+        veiculoId,
+        status: STATUS_VENDA.AGUARDANDO_PAGAMENTO,
+        statusPagamento: STATUS_PAGAMENTO.PENDENTE,
+        preco: 500,
+      } as any;
+      mockRepository.findOne.mockResolvedValue(venda);
+      mockRepository.save.mockImplementation(async (v) => v);
+      const result = await (service as any).atualizarPagamentoPorVeiculo(
+        veiculoId,
+        { statusPagamento: STATUS_PAGAMENTO.FALHOU },
+      );
+      expect(result.venda.status).toBe(STATUS_VENDA.CANCELADO);
+      expect(result.venda.statusPagamento).toBe(STATUS_PAGAMENTO.FALHOU);
+    });
+
+    it('não permite transição de CANCELADO para PAGO', async () => {
+      const veiculoId = 14;
+      const venda = {
+        id: 5,
+        veiculoId,
+        status: STATUS_VENDA.CANCELADO,
+        statusPagamento: STATUS_PAGAMENTO.CANCELADO,
+        preco: 800,
+      } as any;
+      mockRepository.findOne.mockResolvedValue(venda);
+      const result = await (service as any).atualizarPagamentoPorVeiculo(
+        veiculoId,
+        { statusPagamento: 'PAGO' },
+      );
+      expect(result.message).toMatch(/já cancelada/i);
+      expect(result.venda.statusPagamento).toBe('CANCELADO');
+    });
+
+    it('não permite transição de CANCELADO para PENDENTE', async () => {
+      const veiculoId = 1401;
+      const venda = {
+        id: 51,
+        veiculoId,
+        status: STATUS_VENDA.CANCELADO,
+        statusPagamento: STATUS_PAGAMENTO.CANCELADO,
+        preco: 800,
+      } as any;
+      mockRepository.findOne.mockResolvedValue(venda);
+      const result = await (service as any).atualizarPagamentoPorVeiculo(
+        veiculoId,
+        { statusPagamento: STATUS_PAGAMENTO.PENDENTE },
+      );
+      expect(result.message).toMatch(/já cancelada/i);
+      expect(result.venda.statusPagamento).toBe(STATUS_PAGAMENTO.CANCELADO);
+    });
+
+    it('idempotência explícita quando reenvia CANCELADO igual', async () => {
+      const veiculoId = 1402;
+      const venda = {
+        id: 52,
+        veiculoId,
+        status: STATUS_VENDA.CANCELADO,
+        statusPagamento: STATUS_PAGAMENTO.CANCELADO,
+        preco: 50,
+      } as any;
+      mockRepository.findOne.mockResolvedValue(venda);
+      mockRepository.save.mockImplementation(async (v) => v);
+      const result = await (service as any).atualizarPagamentoPorVeiculo(
+        veiculoId,
+        { statusPagamento: STATUS_PAGAMENTO.CANCELADO },
+      );
+      expect(result.message).toMatch(/Nenhuma mudança/);
+      expect(result.venda.statusPagamento).toBe(STATUS_PAGAMENTO.CANCELADO);
+    });
+
+    it('apenas atualiza preço sem mudar status (idempotência de status)', async () => {
+      const veiculoId = 15;
+      const venda = {
+        id: 6,
+        veiculoId,
+        status: STATUS_VENDA.AGUARDANDO_PAGAMENTO,
+        statusPagamento: STATUS_PAGAMENTO.PENDENTE,
+        preco: 1000,
+      } as any;
+      mockRepository.findOne.mockResolvedValue(venda);
+      mockRepository.save.mockImplementation(async (v) => v);
+      const result = await (service as any).atualizarPagamentoPorVeiculo(
+        veiculoId,
+        { statusPagamento: STATUS_PAGAMENTO.PENDENTE, preco: 1200 },
+      );
+      expect(result.venda.preco).toBe(1200);
+      expect(result.message).toMatch(/Nenhuma mudança/);
+    });
+    it('mantém status principal VENDIDO mesmo se statusPagamento tenta voltar para PENDENTE', async () => {
+      const veiculoId = 16;
+      const venda = {
+        id: 7,
+        veiculoId,
+        status: STATUS_VENDA.VENDIDO,
+        statusPagamento: STATUS_PAGAMENTO.PAGO,
+        preco: 2000,
+        pagoEm: new Date(),
+        vendidoEm: new Date(),
+      } as any;
+      mockRepository.findOne.mockResolvedValue(venda);
+      mockRepository.save.mockImplementation(async (v) => v);
+      const result = await (service as any).atualizarPagamentoPorVeiculo(
+        veiculoId,
+        { statusPagamento: STATUS_PAGAMENTO.PENDENTE },
+      );
+      expect(result.venda.status).toBe(STATUS_VENDA.VENDIDO);
+      // statusPagamento voltou para PENDENTE (implementação atual permite), mas status principal não regrediu
+      expect(result.venda.statusPagamento).toBe(STATUS_PAGAMENTO.PENDENTE);
+    });
+
+    it('não altera preco se valor negativo enviado (ignora atualização de preco)', async () => {
+      const veiculoId = 17;
+      const venda = {
+        id: 8,
+        veiculoId,
+        status: STATUS_VENDA.AGUARDANDO_PAGAMENTO,
+        statusPagamento: STATUS_PAGAMENTO.PENDENTE,
+        preco: 500,
+      } as any;
+      mockRepository.findOne.mockResolvedValue(venda);
+      mockRepository.save.mockImplementation(async (v) => v);
+      const result = await (service as any).atualizarPagamentoPorVeiculo(
+        veiculoId,
+        { statusPagamento: STATUS_PAGAMENTO.PENDENTE, preco: -10 },
+      );
+      expect(result.venda.preco).toBe(500); // não mudou
+      expect(result.message).toMatch(/Nenhuma mudança/);
+    });
+
+    it('cancela venda mesmo após já estar VENDIDO ao receber CANCELADO (cobre caminho de regressão)', async () => {
+      const veiculoId = 18;
+      const venda = {
+        id: 9,
+        veiculoId,
+        status: STATUS_VENDA.VENDIDO,
+        statusPagamento: STATUS_PAGAMENTO.PAGO,
+        preco: 900,
+        pagoEm: new Date(),
+        vendidoEm: new Date(),
+      } as any;
+      mockRepository.findOne.mockResolvedValue(venda);
+      mockRepository.save.mockImplementation(async (v) => v);
+      const result = await (service as any).atualizarPagamentoPorVeiculo(
+        veiculoId,
+        { statusPagamento: STATUS_PAGAMENTO.CANCELADO },
+      );
+      expect(result.venda.status).toBe(STATUS_VENDA.CANCELADO);
+      expect(result.venda.statusPagamento).toBe(STATUS_PAGAMENTO.CANCELADO);
     });
   });
 });

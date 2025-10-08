@@ -1,4 +1,4 @@
-import { IsNumber } from 'class-validator';
+import { IsNumber, IsString, Length, IsOptional } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateVendaDto {
@@ -13,4 +13,14 @@ export class CreateVendaDto {
   @ApiProperty({ example: 145.95 })
   @IsNumber()
   preco: number;
+
+  @ApiProperty({
+    example: 'BRL',
+    required: false,
+    description: 'Moeda (default BRL)',
+  })
+  @IsString()
+  @Length(3, 3)
+  @IsOptional()
+  moeda?: string = 'BRL';
 }
