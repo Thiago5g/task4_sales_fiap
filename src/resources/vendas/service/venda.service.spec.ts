@@ -285,5 +285,45 @@ describe('VendaService', () => {
       // statusPagamento voltou para PENDENTE (implementação atual permite), mas status principal não regrediu
       expect(result.venda.statusPagamento).toBe(STATUS_PAGAMENTO.PENDENTE);
     });
+
+    it('não altera preco se valor negativo enviado (ignora atualização de preco)', async () => {
+      const veiculoId = 17;
+      const venda = {
+        id: 8,
+        veiculoId,
+        status: STATUS_VENDA.AGUARDANDO_PAGAMENTO,
+        statusPagamento: STATUS_PAGAMENTO.PENDENTE,
+        preco: 500,
+      } as any;
+      mockRepository.findOne.mockResolvedValue(venda);
+      mockRepository.save.mockImplementation(async (v) => v);
+      const result = await (service as any).atualizarPagamentoPorVeiculo(
+        veiculoId,
+        { statusPagamento: STATUS_PAGAMENTO.PENDENTE, preco: -10 },
+      );
+      expect(result.venda.preco).toBe(500); // não mudou
+      expect(result.message).toMatch(/Nenhuma mudança/);
+    });
+
+    it('cancela venda mesmo após já estar VENDIDO ao receber CANCELADO (cobre caminho de regressão)', async () => {
+      const veiculoId = 18;
+      const venda = {
+        id: 9,
+        veiculoId,
+        status: STATUS_VENDA.VENDIDO,
+        statusPagamento: STATUS_PAGAMENTO.PAGO,
+        preco: 900,
+        pagoEm: new Date(),
+        vendidoEm: new Date(),
+      } as any;
+      mockRepository.findOne.mockResolvedValue(venda);
+      mockRepository.save.mockImplementation(async (v) => v);
+      const result = await (service as any).atualizarPagamentoPorVeiculo(
+        veiculoId,
+        { statusPagamento: STATUS_PAGAMENTO.CANCELADO },
+      );
+      expect(result.venda.status).toBe(STATUS_VENDA.CANCELADO);
+      expect(result.venda.statusPagamento).toBe(STATUS_PAGAMENTO.CANCELADO);
+    });
   });
 });
