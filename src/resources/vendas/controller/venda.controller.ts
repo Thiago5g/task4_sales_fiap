@@ -4,8 +4,8 @@ import {
   Body,
   Param,
   ParseIntPipe,
-  Post,
   Patch,
+  Post,
 } from '@nestjs/common';
 import { VendaService } from '../service/venda.service';
 import { CreateVendaDto } from '../dto/create-venda.dto';
