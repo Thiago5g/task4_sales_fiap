@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 import { NotFoundException } from '@nestjs/common';
 import { VendaService } from './venda.service';
 import { Venda } from '../entity/venda.entity';
+import { STATUS_VENDA, STATUS_PAGAMENTO } from '../constants/status.constants';
 
 describe('VendaService', () => {
   let service: VendaService;
@@ -51,8 +52,8 @@ describe('VendaService', () => {
         veiculoId,
         preco,
         moeda: 'BRL',
-        status: 'AGUARDANDO_PAGAMENTO',
-        statusPagamento: 'PENDENTE',
+        status: STATUS_VENDA.AGUARDANDO_PAGAMENTO,
+        statusPagamento: STATUS_PAGAMENTO.PENDENTE,
         codigoPagamento: 'PAY-1-AAAAAA',
       } as any;
       mockRepository.create.mockReturnValue(mockVenda);
@@ -67,13 +68,13 @@ describe('VendaService', () => {
         clienteId,
         preco,
         moeda: 'BRL',
-        status: 'AGUARDANDO_PAGAMENTO',
-        statusPagamento: 'PENDENTE',
+        status: STATUS_VENDA.AGUARDANDO_PAGAMENTO,
+        statusPagamento: STATUS_PAGAMENTO.PENDENTE,
         codigoPagamento: expect.any(String),
       });
       expect(result.message).toBe('Venda criada e aguardando pagamento.');
-      expect(result.venda.status).toBe('AGUARDANDO_PAGAMENTO');
-      expect(result.venda.statusPagamento).toBe('PENDENTE');
+      expect(result.venda.status).toBe(STATUS_VENDA.AGUARDANDO_PAGAMENTO);
+      expect(result.venda.statusPagamento).toBe(STATUS_PAGAMENTO.PENDENTE);
     });
 
     it('propaga erro do repository ao salvar', async () => {
@@ -151,8 +152,8 @@ describe('VendaService', () => {
       const venda = {
         id: 1,
         veiculoId,
-        status: 'AGUARDANDO_PAGAMENTO',
-        statusPagamento: 'PENDENTE',
+        status: STATUS_VENDA.AGUARDANDO_PAGAMENTO,
+        statusPagamento: STATUS_PAGAMENTO.PENDENTE,
         preco: 100,
         pagoEm: null,
         vendidoEm: null,
@@ -161,10 +162,10 @@ describe('VendaService', () => {
       mockRepository.save.mockImplementation(async (v) => v);
       const result = await (service as any).atualizarPagamentoPorVeiculo(
         veiculoId,
-        { statusPagamento: 'PAGO' },
+        { statusPagamento: STATUS_PAGAMENTO.PAGO },
       );
-      expect(result.venda.status).toBe('VENDIDO');
-      expect(result.venda.statusPagamento).toBe('PAGO');
+      expect(result.venda.status).toBe(STATUS_VENDA.VENDIDO);
+      expect(result.venda.statusPagamento).toBe(STATUS_PAGAMENTO.PAGO);
       expect(result.venda.pagoEm).toBeDefined();
       expect(result.venda.vendidoEm).toBeDefined();
     });
@@ -174,17 +175,17 @@ describe('VendaService', () => {
       const venda = {
         id: 2,
         veiculoId,
-        status: 'AGUARDANDO_PAGAMENTO',
-        statusPagamento: 'PENDENTE',
+        status: STATUS_VENDA.AGUARDANDO_PAGAMENTO,
+        statusPagamento: STATUS_PAGAMENTO.PENDENTE,
         preco: 150,
       } as any;
       mockRepository.findOne.mockResolvedValue(venda);
       mockRepository.save.mockImplementation(async (v) => v);
       const result = await (service as any).atualizarPagamentoPorVeiculo(
         veiculoId,
-        { statusPagamento: 'CANCELADO' },
+        { statusPagamento: STATUS_PAGAMENTO.CANCELADO },
       );
-      expect(result.venda.status).toBe('CANCELADO');
+      expect(result.venda.status).toBe(STATUS_VENDA.CANCELADO);
     });
 
     it('mantém idempotência se repetir PAGO', async () => {
@@ -192,8 +193,8 @@ describe('VendaService', () => {
       const venda = {
         id: 3,
         veiculoId,
-        status: 'VENDIDO',
-        statusPagamento: 'PAGO',
+        status: STATUS_VENDA.VENDIDO,
+        statusPagamento: STATUS_PAGAMENTO.PAGO,
         preco: 200,
         pagoEm: new Date(),
         vendidoEm: new Date(),
@@ -202,7 +203,7 @@ describe('VendaService', () => {
       mockRepository.save.mockImplementation(async (v) => v);
       const result = await (service as any).atualizarPagamentoPorVeiculo(
         veiculoId,
-        { statusPagamento: 'PAGO', preco: 210 },
+        { statusPagamento: STATUS_PAGAMENTO.PAGO, preco: 210 },
       );
       expect(result.message).toMatch(/Nenhuma mudança/);
       expect(result.venda.preco).toBe(210);
@@ -213,18 +214,18 @@ describe('VendaService', () => {
       const venda = {
         id: 4,
         veiculoId,
-        status: 'AGUARDANDO_PAGAMENTO',
-        statusPagamento: 'PENDENTE',
+        status: STATUS_VENDA.AGUARDANDO_PAGAMENTO,
+        statusPagamento: STATUS_PAGAMENTO.PENDENTE,
         preco: 500,
       } as any;
       mockRepository.findOne.mockResolvedValue(venda);
       mockRepository.save.mockImplementation(async (v) => v);
       const result = await (service as any).atualizarPagamentoPorVeiculo(
         veiculoId,
-        { statusPagamento: 'FALHOU' },
+        { statusPagamento: STATUS_PAGAMENTO.FALHOU },
       );
-      expect(result.venda.status).toBe('CANCELADO');
-      expect(result.venda.statusPagamento).toBe('FALHOU');
+      expect(result.venda.status).toBe(STATUS_VENDA.CANCELADO);
+      expect(result.venda.statusPagamento).toBe(STATUS_PAGAMENTO.FALHOU);
     });
 
     it('não permite transição de CANCELADO para PAGO', async () => {
@@ -232,8 +233,8 @@ describe('VendaService', () => {
       const venda = {
         id: 5,
         veiculoId,
-        status: 'CANCELADO',
-        statusPagamento: 'CANCELADO',
+        status: STATUS_VENDA.CANCELADO,
+        statusPagamento: STATUS_PAGAMENTO.CANCELADO,
         preco: 800,
       } as any;
       mockRepository.findOne.mockResolvedValue(venda);
@@ -250,15 +251,15 @@ describe('VendaService', () => {
       const venda = {
         id: 6,
         veiculoId,
-        status: 'AGUARDANDO_PAGAMENTO',
-        statusPagamento: 'PENDENTE',
+        status: STATUS_VENDA.AGUARDANDO_PAGAMENTO,
+        statusPagamento: STATUS_PAGAMENTO.PENDENTE,
         preco: 1000,
       } as any;
       mockRepository.findOne.mockResolvedValue(venda);
       mockRepository.save.mockImplementation(async (v) => v);
       const result = await (service as any).atualizarPagamentoPorVeiculo(
         veiculoId,
-        { statusPagamento: 'PENDENTE', preco: 1200 },
+        { statusPagamento: STATUS_PAGAMENTO.PENDENTE, preco: 1200 },
       );
       expect(result.venda.preco).toBe(1200);
       expect(result.message).toMatch(/Nenhuma mudança/);
@@ -268,8 +269,8 @@ describe('VendaService', () => {
       const venda = {
         id: 7,
         veiculoId,
-        status: 'VENDIDO',
-        statusPagamento: 'PAGO',
+        status: STATUS_VENDA.VENDIDO,
+        statusPagamento: STATUS_PAGAMENTO.PAGO,
         preco: 2000,
         pagoEm: new Date(),
         vendidoEm: new Date(),
@@ -278,11 +279,11 @@ describe('VendaService', () => {
       mockRepository.save.mockImplementation(async (v) => v);
       const result = await (service as any).atualizarPagamentoPorVeiculo(
         veiculoId,
-        { statusPagamento: 'PENDENTE' },
+        { statusPagamento: STATUS_PAGAMENTO.PENDENTE },
       );
-      expect(result.venda.status).toBe('VENDIDO');
+      expect(result.venda.status).toBe(STATUS_VENDA.VENDIDO);
       // statusPagamento voltou para PENDENTE (implementação atual permite), mas status principal não regrediu
-      expect(result.venda.statusPagamento).toBe('PENDENTE');
+      expect(result.venda.statusPagamento).toBe(STATUS_PAGAMENTO.PENDENTE);
     });
   });
 });
