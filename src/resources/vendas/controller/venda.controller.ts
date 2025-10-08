@@ -3,8 +3,8 @@ import {
   Get,
   Body,
   Param,
-  Post,
   ParseIntPipe,
+  Post,
   Patch,
 } from '@nestjs/common';
 import { VendaService } from '../service/venda.service';
