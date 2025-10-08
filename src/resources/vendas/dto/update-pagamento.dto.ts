@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNumber, IsOptional, IsString, IsIn } from 'class-validator';
+import { IsNumber, IsOptional, IsIn, IsString } from 'class-validator';
 
 export class UpdatePagamentoDto {
   @ApiProperty({
