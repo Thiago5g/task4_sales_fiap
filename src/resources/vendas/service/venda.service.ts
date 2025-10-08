@@ -4,6 +4,11 @@ import { Repository } from 'typeorm';
 import { Venda } from '../entity/venda.entity';
 import { gerarCodigoPagamento } from '../../../common/utils/gerar-codigo-pagamento';
 import { UpdatePagamentoDto } from '../dto/update-pagamento.dto';
+import {
+  STATUS_PAGAMENTO,
+  STATUS_VENDA,
+  STATUS_PARA_CANCELAMENTO,
+} from '../constants/status.constants';
 
 @Injectable()
 export class VendaService {
@@ -24,8 +29,8 @@ export class VendaService {
       clienteId,
       preco,
       moeda,
-      status: 'AGUARDANDO_PAGAMENTO',
-      statusPagamento: 'PENDENTE',
+      status: STATUS_VENDA.AGUARDANDO_PAGAMENTO,
+      statusPagamento: STATUS_PAGAMENTO.PENDENTE,
       codigoPagamento,
     } as any);
     const vendaSalva = await this.VendaRepo.save(venda);
@@ -76,9 +81,9 @@ export class VendaService {
 
     // Bloqueia transições após CANCELED (exceto permanecer CANCELED)
     if (
-      venda.status === 'CANCELADO' &&
+      venda.status === STATUS_VENDA.CANCELADO &&
       dto.statusPagamento &&
-      dto.statusPagamento !== 'CANCELADO'
+      dto.statusPagamento !== STATUS_PAGAMENTO.CANCELADO
     ) {
       return {
         message: 'Venda já cancelada. Transição não permitida.',
@@ -97,19 +102,18 @@ export class VendaService {
     if (dto.statusPagamento && dto.statusPagamento !== venda.statusPagamento) {
       venda.statusPagamento = dto.statusPagamento as any;
 
-      if (dto.statusPagamento === 'PAGO') {
-        venda.status = 'VENDIDO';
+      if (dto.statusPagamento === STATUS_PAGAMENTO.PAGO) {
+        venda.status = STATUS_VENDA.VENDIDO;
         if (!venda.pagoEm) venda.pagoEm = agora;
         if (!venda.vendidoEm) venda.vendidoEm = agora;
       } else if (
-        dto.statusPagamento === 'CANCELADO' ||
-        dto.statusPagamento === 'FALHOU'
+        STATUS_PARA_CANCELAMENTO.includes(dto.statusPagamento as any)
       ) {
-        venda.status = 'CANCELADO';
-      } else if (dto.statusPagamento === 'PENDENTE') {
+        venda.status = STATUS_VENDA.CANCELADO;
+      } else if (dto.statusPagamento === STATUS_PAGAMENTO.PENDENTE) {
         // Só volta para pendente se ainda não VENDIDO
-        if (venda.status !== 'VENDIDO') {
-          venda.status = 'AGUARDANDO_PAGAMENTO';
+        if (venda.status !== STATUS_VENDA.VENDIDO) {
+          venda.status = STATUS_VENDA.AGUARDANDO_PAGAMENTO;
         }
       }
     }
