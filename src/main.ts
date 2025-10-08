@@ -8,7 +8,12 @@ async function bootstrap() {
   const configService = app.get(ConfigService);
 
   // Get environment variables
-  const port = configService.get<number>('PORT', 3001);
+  // Se PORT vier do ambiente, usar diretamente, senão fallback 3001
+  const portEnv = process.env.PORT || configService.get<string>('PORT');
+  const port = portEnv ? Number(portEnv) : 3001;
+  if (isNaN(port)) {
+    throw new Error(`Valor de PORT inválido: ${portEnv}`);
+  }
   const nodeEnv = configService.get<string>('NODE_ENV', 'development');
   const corsOriginLocal = configService.get<string>(
     'CORS_ORIGIN_LOCAL',
