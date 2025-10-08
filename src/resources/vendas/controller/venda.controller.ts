@@ -1,9 +1,9 @@
 import {
   Controller,
-  Post,
-  Body,
   Get,
+  Body,
   Param,
+  Post,
   ParseIntPipe,
 } from '@nestjs/common';
 import { VendaService } from '../service/venda.service';
