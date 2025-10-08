@@ -7,8 +7,8 @@ on:
     branches: [ main ]
 
 jobs:
-  test:
-    name: Run Tests and Coverage
+  test_and_sonar:
+    name: Tests + Coverage + Sonar
     runs-on: ubuntu-latest
 
     strategy:
@@ -33,8 +33,8 @@ jobs:
     - name: Run linter
       run: npm run lint
 
-    - name: Run tests with coverage
-      run: npm run test:cov
+    - name: Run tests with coverage (lcov)
+      run: npm run coverage:ci:normalized
 
     - name: Check coverage threshold
       run: |
@@ -56,43 +56,10 @@ jobs:
           exit 1
         fi
 
-    - name: Upload coverage reports to Codecov
-      uses: codecov/codecov-action@v3
-      with:
-        file: ./coverage/lcov.info
-        flags: unittests
-        name: codecov-umbrella
-
-  sonarcloud:
-    name: SonarCloud Analysis
-    runs-on: ubuntu-latest
-    needs: test
-    if: >-
-      github.ref == 'refs/heads/main' ||
-      (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository)
-    
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
-
-    - name: Use Node.js 20.x
-      uses: actions/setup-node@v4
-      with:
-        node-version: 20.x
-        cache: 'npm'
-
-    - name: Install dependencies (prod only for sonar)
-      run: npm ci --omit=dev || npm ci
-
-    - name: Download coverage artifact
-      uses: actions/download-artifact@v4
-      with:
-        name: coverage-report
-        path: coverage
-
-    - name: Sonar Quality Scan     
+    - name: Sonar Quality Scan
+      if: >-
+        github.ref == 'refs/heads/main' ||
+        (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository)
       uses: SonarSource/sonarqube-scan-action@fd88b7d7ccbaefd23d8f36f73b59db7a3d246602
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -104,7 +71,7 @@ jobs:
   build:
     name: Build Application
     runs-on: ubuntu-latest
-    needs: test
+    needs: test_and_sonar
 
     steps:
     - name: Checkout code
