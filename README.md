@@ -1,6 +1,6 @@
-# Plataforma de Revenda de Veículos – Backend API
+# Plataforma de Revenda de Veículos – Microservico de Vendas
 
-Esta é a API para uma plataforma de revenda de veículos construída com NestJS e TypeORM, como parte do desafio Sub Tech Challenge do curso SOAT – PósTech (fase 3).
+Esta é um microserivco para uma plataforma de revenda de veículos construída com NestJS e TypeORM, como parte do desafio Sub Tech Challenge do curso SOAT – PósTech (fase 4).
 
 ---
 
@@ -18,11 +18,10 @@ A autenticação está implementada internamente com JWT, mas pode ser migrada p
 
 ## 🧱 Arquitetura e Módulos
 
-- **auth**: autenticação/login de usuários via JWT.
-- **usuarios**: validação da existência de usuários e associação a autenticação.
-- **clientes**: cadastro e atualização de dados de clientes (quantidade de carros comprados, dados pessoais etc.).
-- **veiculos**: CRUD de veículos e endpoints de listagem (disponíveis e vendidos).
-- **vendas**: processamento de vendas — valida veículo, atualiza status e registra a transação.
+
+- **vendas**: processamento de vendas — registra a transação - atualiza status do pagamento.
+ - **vendas**: listagens das vendas.
+  - **vendas**: obter a venda de um veiculo pele ID.
 
 Cada módulo está isolado com controladores, serviços e DTOs, utilizando TypeORM para persistência em banco de dados relacional.
 
