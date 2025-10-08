@@ -13,7 +13,8 @@ export const STATUS_PAGAMENTO = {
   FALHOU: 'FALHOU',
 } as const;
 
-export type StatusPagamento = (typeof STATUS_PAGAMENTO)[keyof typeof STATUS_PAGAMENTO];
+export type StatusPagamento =
+  (typeof STATUS_PAGAMENTO)[keyof typeof STATUS_PAGAMENTO];
 
 export const STATUS_PARA_CANCELAMENTO: StatusPagamento[] = [
   STATUS_PAGAMENTO.CANCELADO,
