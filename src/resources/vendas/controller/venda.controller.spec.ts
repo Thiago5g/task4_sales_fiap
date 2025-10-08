@@ -234,13 +234,14 @@ describe('VendaController', () => {
         venda: { id: 5, veiculoId, status: 'VENDIDO', statusPagamento: 'PAGO' },
       };
       mockVendaService.atualizarPagamentoPorVeiculo.mockResolvedValue(expected);
-      // controller method name: atualizarPagamento
       const resultPromise = (controller as any).atualizarPagamento(
         veiculoId,
         body,
       );
       await expect(resultPromise).resolves.toEqual(expected);
-      expect(mockVendaService.atualizarPagamentoPorVeiculo).toHaveBeenCalledWith(veiculoId, {
+      expect(
+        mockVendaService.atualizarPagamentoPorVeiculo,
+      ).toHaveBeenCalledWith(veiculoId, {
         statusPagamento: 'PAGO',
         preco: 199.9,
       });
