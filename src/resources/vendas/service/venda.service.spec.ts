@@ -89,6 +89,32 @@ describe('VendaService', () => {
         service.realizarVenda(clienteId, veiculoId, preco),
       ).rejects.toThrow('Database connection failed');
     });
+
+    it('cria venda com moeda customizada (USD)', async () => {
+      const clienteId = 22;
+      const veiculoId = 2200;
+      const preco = 123.45;
+      const mockVenda = {
+        id: 77,
+        clienteId,
+        veiculoId,
+        preco,
+        moeda: 'USD',
+        status: STATUS_VENDA.AGUARDANDO_PAGAMENTO,
+        statusPagamento: STATUS_PAGAMENTO.PENDENTE,
+        codigoPagamento: 'PAY-99-FFFFAA',
+      } as any;
+      mockRepository.create.mockReturnValue(mockVenda);
+      mockRepository.save.mockResolvedValue(mockVenda);
+      const result: any = await service.realizarVenda(
+        clienteId,
+        veiculoId,
+        preco,
+        'USD',
+      );
+      expect(result.venda.moeda).toBe('USD');
+      expect(result.venda.status).toBe(STATUS_VENDA.AGUARDANDO_PAGAMENTO);
+    });
   });
 
   describe('listarVendas', () => {
@@ -188,6 +214,15 @@ describe('VendaService', () => {
       expect(result.venda.status).toBe(STATUS_VENDA.CANCELADO);
     });
 
+    it('retorna NotFoundException quando venda não existe', async () => {
+      mockRepository.findOne.mockResolvedValue(null);
+      await expect(
+        (service as any).atualizarPagamentoPorVeiculo(9999, {
+          statusPagamento: STATUS_PAGAMENTO.PAGO,
+        }),
+      ).rejects.toThrow(NotFoundException);
+    });
+
     it('mantém idempotência se repetir PAGO', async () => {
       const veiculoId = 12;
       const venda = {
@@ -244,6 +279,43 @@ describe('VendaService', () => {
       );
       expect(result.message).toMatch(/já cancelada/i);
       expect(result.venda.statusPagamento).toBe('CANCELADO');
+    });
+
+    it('não permite transição de CANCELADO para PENDENTE', async () => {
+      const veiculoId = 1401;
+      const venda = {
+        id: 51,
+        veiculoId,
+        status: STATUS_VENDA.CANCELADO,
+        statusPagamento: STATUS_PAGAMENTO.CANCELADO,
+        preco: 800,
+      } as any;
+      mockRepository.findOne.mockResolvedValue(venda);
+      const result = await (service as any).atualizarPagamentoPorVeiculo(
+        veiculoId,
+        { statusPagamento: STATUS_PAGAMENTO.PENDENTE },
+      );
+      expect(result.message).toMatch(/já cancelada/i);
+      expect(result.venda.statusPagamento).toBe(STATUS_PAGAMENTO.CANCELADO);
+    });
+
+    it('idempotência explícita quando reenvia CANCELADO igual', async () => {
+      const veiculoId = 1402;
+      const venda = {
+        id: 52,
+        veiculoId,
+        status: STATUS_VENDA.CANCELADO,
+        statusPagamento: STATUS_PAGAMENTO.CANCELADO,
+        preco: 50,
+      } as any;
+      mockRepository.findOne.mockResolvedValue(venda);
+      mockRepository.save.mockImplementation(async (v) => v);
+      const result = await (service as any).atualizarPagamentoPorVeiculo(
+        veiculoId,
+        { statusPagamento: STATUS_PAGAMENTO.CANCELADO },
+      );
+      expect(result.message).toMatch(/Nenhuma mudança/);
+      expect(result.venda.statusPagamento).toBe(STATUS_PAGAMENTO.CANCELADO);
     });
 
     it('apenas atualiza preço sem mudar status (idempotência de status)', async () => {

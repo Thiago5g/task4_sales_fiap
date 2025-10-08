@@ -79,7 +79,7 @@ export class VendaService {
       throw new NotFoundException('Venda não encontrada para este veículo.');
     }
 
-    // Bloqueia transições após CANCELED (exceto permanecer CANCELED)
+    // Tentativa de transição após cancelamento definitivo
     if (
       venda.status === STATUS_VENDA.CANCELADO &&
       dto.statusPagamento &&
@@ -91,34 +91,13 @@ export class VendaService {
       };
     }
 
-    const agora = new Date();
     const originalStatusPagamento = venda.statusPagamento;
 
-    // Atualiza preco se enviado
-    if (typeof dto.preco === 'number' && dto.preco >= 0) {
-      venda.preco = dto.preco;
+    this.aplicarAtualizacoesDePreco(venda, dto.preco);
+    if (this.deveAplicarTransicao(venda, dto.statusPagamento)) {
+      this.aplicarTransicaoStatus(venda, dto.statusPagamento as any);
     }
 
-    if (dto.statusPagamento && dto.statusPagamento !== venda.statusPagamento) {
-      venda.statusPagamento = dto.statusPagamento as any;
-
-      if (dto.statusPagamento === STATUS_PAGAMENTO.PAGO) {
-        venda.status = STATUS_VENDA.VENDIDO;
-        if (!venda.pagoEm) venda.pagoEm = agora;
-        if (!venda.vendidoEm) venda.vendidoEm = agora;
-      } else if (
-        STATUS_PARA_CANCELAMENTO.includes(dto.statusPagamento as any)
-      ) {
-        venda.status = STATUS_VENDA.CANCELADO;
-      } else if (dto.statusPagamento === STATUS_PAGAMENTO.PENDENTE) {
-        // Só volta para pendente se ainda não VENDIDO
-        if (venda.status !== STATUS_VENDA.VENDIDO) {
-          venda.status = STATUS_VENDA.AGUARDANDO_PAGAMENTO;
-        }
-      }
-    }
-
-    // Idempotência: se statusPagamento igual, apenas aplica eventual preco
     const vendaAtualizada = await this.VendaRepo.save(venda);
     const mudouStatus =
       originalStatusPagamento !== vendaAtualizada.statusPagamento;
@@ -128,5 +107,44 @@ export class VendaService {
         : 'Nenhuma mudança de status. Dados atualizados.',
       venda: vendaAtualizada,
     };
+  }
+
+  private aplicarAtualizacoesDePreco(venda: Venda, preco?: number) {
+    if (typeof preco === 'number' && preco >= 0) {
+      venda.preco = preco;
+    }
+  }
+
+  private deveAplicarTransicao(
+    venda: Venda,
+    novoStatusPagamento?: string,
+  ): boolean {
+    return (
+      !!novoStatusPagamento && novoStatusPagamento !== venda.statusPagamento
+    );
+  }
+
+  private aplicarTransicaoStatus(venda: Venda, novo: string) {
+    const agora = new Date();
+    venda.statusPagamento = novo as any;
+
+    if (novo === STATUS_PAGAMENTO.PAGO) {
+      venda.status = STATUS_VENDA.VENDIDO;
+      if (!venda.pagoEm) venda.pagoEm = agora;
+      if (!venda.vendidoEm) venda.vendidoEm = agora;
+      return;
+    }
+
+    if (STATUS_PARA_CANCELAMENTO.includes(novo as any)) {
+      venda.status = STATUS_VENDA.CANCELADO;
+      return;
+    }
+
+    if (
+      novo === STATUS_PAGAMENTO.PENDENTE &&
+      venda.status !== STATUS_VENDA.VENDIDO
+    ) {
+      venda.status = STATUS_VENDA.AGUARDANDO_PAGAMENTO;
+    }
   }
 }
