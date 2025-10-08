@@ -11,7 +11,7 @@ describe('VendaController', () => {
     realizarVenda: jest.fn(),
     listarVendas: jest.fn(),
     obterVendaPorVeiculoId: jest.fn(),
-    atualizarPagamento: jest.fn(),
+    atualizarPagamentoPorVeiculo: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -226,27 +226,24 @@ describe('VendaController', () => {
   });
 
   describe('atualizarPagamento', () => {
-    it('chama service.atualizarPagamento', async () => {
+    it('chama service.atualizarPagamentoPorVeiculo', async () => {
       const veiculoId = 77;
       const body = { statusPagamento: 'PAGO', preco: 199.9 } as any;
       const expected = {
         message: 'Pagamento atualizado com sucesso.',
         venda: { id: 5, veiculoId, status: 'VENDIDO', statusPagamento: 'PAGO' },
       };
-      mockVendaService.atualizarPagamento.mockResolvedValue(expected);
+      mockVendaService.atualizarPagamentoPorVeiculo.mockResolvedValue(expected);
       // controller method name: atualizarPagamento
       const resultPromise = (controller as any).atualizarPagamento(
         veiculoId,
         body,
       );
       await expect(resultPromise).resolves.toEqual(expected);
-      expect(mockVendaService.atualizarPagamento).toHaveBeenCalledWith(
-        veiculoId,
-        {
-          statusPagamento: 'PAGO',
-          preco: 199.9,
-        },
-      );
+      expect(mockVendaService.atualizarPagamentoPorVeiculo).toHaveBeenCalledWith(veiculoId, {
+        statusPagamento: 'PAGO',
+        preco: 199.9,
+      });
     });
   });
 });

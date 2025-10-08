@@ -11,8 +11,9 @@ async function bootstrap() {
   // Se PORT vier do ambiente, usar diretamente, senão fallback 3001
   const portEnv = process.env.PORT || configService.get<string>('PORT');
   const port = portEnv ? Number(portEnv) : 3001;
-  if (isNaN(port)) {
-    throw new Error(`Valor de PORT inválido: ${portEnv}`);
+  // Validação mais explícita do valor numérico usando Number.isNaN e erro de tipo apropriado
+  if (Number.isNaN(port)) {
+    throw new TypeError(`Valor de PORT inválido: ${portEnv}`);
   }
   const nodeEnv = configService.get<string>('NODE_ENV', 'development');
   const corsOriginLocal = configService.get<string>(
