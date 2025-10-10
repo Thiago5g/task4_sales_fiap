@@ -94,24 +94,7 @@ Documentação Swagger: `http://localhost:3001/api/docs`
 - **PostgreSQL**
 - **Jest** (testes unitários + cobertura)
 - **Swagger** para documentação
-
----
-
-## 🗄️ Migrations
-As migrações ficam em `src/migrations` e são executadas via scripts NPM:
-
-```bash
-npm run migration:run
-npm run migration:revert
-npm run migration:generate -- src/migrations/NomeMigration
-```
-
-Migrações importantes:
-1. `CreateVendasTable`
-2. `UpdateVendasPaymentFields` (campos de pagamento)
-3. `RenameVendaColumnsPtBr` (tradução de colunas)
-4. `TranslateStatusValuesPtBr` (tradução de valores e defaults)
-
+  
 ---
 
 ## 🧪 Testes & Cobertura
