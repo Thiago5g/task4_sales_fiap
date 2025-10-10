@@ -135,7 +135,7 @@ Gerado determinística e sequencialmente (`PAY-<contador>-<HEX>`). Implementado 
 ---
 
 ## 🛡️ Boas Práticas Adotadas
-- Migrations explícitas (sem sync automático)
+- Panto de dados hospedado no supabase - não necessita de criação de banco local e migration
 - DTOs validados com `class-validator`
 - Status e campos em PT-BR alinhados com domínio
 - Testes unitários abrangendo fluxos de transição de pagamento
@@ -146,9 +146,8 @@ Gerado determinística e sequencialmente (`PAY-<contador>-<HEX>`). Implementado 
 ## ▶️ Como Rodar Localmente
 1. `npm install`
 2. Definir `DATABASE_URL` (ou usar fallback do datasource para desenvolvimento)
-3. `npm run migration:run`
-4. `npm run start:dev`
-5. Acessar `/api/docs`
+3. `npm run start:dev`
+4. Acessar `/api/docs`
 
 Variáveis úteis:
 | Variável | Descrição |
@@ -159,7 +158,7 @@ Variáveis úteis:
 
 ---
 
-## 🚧 Próximos Passos (Sugestões)
+## 🚧 Próximos Passos
 - Testes E2E cobrindo PATCH de pagamento com banco real.
 - Publicar imagem Docker.
 - Circuit breaker / retries para callbacks externos (se houver integração futura).
