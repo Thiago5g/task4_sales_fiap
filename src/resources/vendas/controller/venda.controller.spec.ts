@@ -11,7 +11,7 @@ describe('VendaController', () => {
     realizarVenda: jest.fn(),
     listarVendas: jest.fn(),
     obterVendaPorVeiculoId: jest.fn(),
-    atualizarPagamentoPorVeiculo: jest.fn(),
+    atualizarPagamentoPorCodigo: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -191,7 +191,7 @@ describe('VendaController', () => {
 
       mockVendaService.obterVendaPorVeiculoId.mockResolvedValue(expectedVenda);
 
-      const result = await controller.obterVendaPorVeiculo(veiculoId);
+      const result = await controller.obterVendaPorVeiculo(String(veiculoId));
 
       expect(service.obterVendaPorVeiculoId).toHaveBeenCalledWith(veiculoId);
       expect(service.obterVendaPorVeiculoId).toHaveBeenCalledTimes(1);
@@ -203,9 +203,9 @@ describe('VendaController', () => {
       const error = new Error('Venda não encontrada para este veículo.');
       mockVendaService.obterVendaPorVeiculoId.mockRejectedValue(error);
 
-      await expect(controller.obterVendaPorVeiculo(veiculoId)).rejects.toThrow(
-        'Venda não encontrada para este veículo.',
-      );
+      await expect(
+        controller.obterVendaPorVeiculo(String(veiculoId)),
+      ).rejects.toThrow('Venda não encontrada para este veículo.');
       expect(service.obterVendaPorVeiculoId).toHaveBeenCalledWith(veiculoId);
     });
 
@@ -220,31 +220,40 @@ describe('VendaController', () => {
         statusPagamento: 'PENDENTE',
       };
       mockVendaService.obterVendaPorVeiculoId.mockResolvedValue(expectedVenda);
-      const result = await controller.obterVendaPorVeiculo(veiculoIdLocal);
+      const result = await controller.obterVendaPorVeiculo(
+        String(veiculoIdLocal),
+      );
       expect(result).toEqual(expectedVenda);
     });
   });
 
-  describe('atualizarPagamento', () => {
-    it('chama service.atualizarPagamentoPorVeiculo', async () => {
-      const veiculoId = 77;
+  describe('atualizarPagamento (por codigoPagamento)', () => {
+    it('chama service.atualizarPagamentoPorCodigo', async () => {
+      const codigoPagamento = 'PAY-1-AAA111';
       const body = { statusPagamento: 'PAGO', preco: 199.9 } as any;
       const expected = {
         message: 'Pagamento atualizado com sucesso.',
-        venda: { id: 5, veiculoId, status: 'VENDIDO', statusPagamento: 'PAGO' },
+        venda: {
+          id: 5,
+          codigoPagamento,
+          status: 'VENDIDO',
+          statusPagamento: 'PAGO',
+          preco: 199.9,
+        },
       };
-      mockVendaService.atualizarPagamentoPorVeiculo.mockResolvedValue(expected);
+      mockVendaService.atualizarPagamentoPorCodigo.mockResolvedValue(expected);
       const resultPromise = (controller as any).atualizarPagamento(
-        veiculoId,
+        codigoPagamento,
         body,
       );
       await expect(resultPromise).resolves.toEqual(expected);
-      expect(
-        mockVendaService.atualizarPagamentoPorVeiculo,
-      ).toHaveBeenCalledWith(veiculoId, {
-        statusPagamento: 'PAGO',
-        preco: 199.9,
-      });
+      expect(mockVendaService.atualizarPagamentoPorCodigo).toHaveBeenCalledWith(
+        codigoPagamento,
+        {
+          statusPagamento: 'PAGO',
+          preco: 199.9,
+        },
+      );
     });
   });
 });

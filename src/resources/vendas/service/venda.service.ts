@@ -109,6 +109,36 @@ export class VendaService {
     };
   }
 
+  async atualizarPagamentoPorCodigo(
+    codigoPagamento: string,
+    dto: Omit<UpdatePagamentoDto, 'codigoPagamento'>,
+  ) {
+    const venda = await this.VendaRepo.findOne({ where: { codigoPagamento } });
+    if (!venda) {
+      throw new NotFoundException('Venda não encontrada para este código.');
+    }
+    console.log(venda, 'venda');
+    console.log(codigoPagamento, 'codigoPagamento');
+    console.log(dto, 'dto');
+    // Reutiliza fluxo: adaptamos objeto shipping veiculoId apenas para reutilizar mentalmente.
+    const originalStatusPagamento = venda.statusPagamento;
+
+    this.aplicarAtualizacoesDePreco(venda, dto.preco);
+    if (this.deveAplicarTransicao(venda, dto.statusPagamento)) {
+      this.aplicarTransicaoStatus(venda, dto.statusPagamento as any);
+    }
+
+    const vendaAtualizada = await this.VendaRepo.save(venda);
+    const mudouStatus =
+      originalStatusPagamento !== vendaAtualizada.statusPagamento;
+    return {
+      message: mudouStatus
+        ? 'Pagamento atualizado com sucesso.'
+        : 'Nenhuma mudança de status. Dados atualizados.',
+      venda: vendaAtualizada,
+    };
+  }
+
   private aplicarAtualizacoesDePreco(venda: Venda, preco?: number) {
     if (typeof preco === 'number' && preco >= 0) {
       venda.preco = preco;

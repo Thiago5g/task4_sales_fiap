@@ -10,7 +10,7 @@ import { VendaModule } from './resources/vendas/venda.module';
     ConfigModule.forRoot({ isGlobal: true }),
     TypeOrmModule.forRoot({
       type: 'postgres',
-      url: process.env.DATABASE_URL,
+      url: 'postgresql://postgres:10203040@db.dlilvhrablvzweomvhvj.supabase.co:5432/postgres',
       autoLoadEntities: true,
       // synchronize: true,
     }),

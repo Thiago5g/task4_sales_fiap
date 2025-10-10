@@ -1,13 +1,13 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNumber, IsOptional, IsIn, IsString } from 'class-validator';
+import { IsOptional, IsIn, IsString, IsNumber } from 'class-validator';
 
 export class UpdatePagamentoDto {
   @ApiProperty({
-    example: 42,
-    description: 'ID do veículo relacionado à venda',
+    example: 'PAY-1-A1B2C3',
+    description: 'Código único do pagamento gerado na criação da venda',
   })
-  @IsNumber()
-  veiculoId: number;
+  @IsString()
+  codigoPagamento: string;
 
   @ApiProperty({
     example: 'PAGO',

@@ -15,27 +15,25 @@ async function bootstrap() {
   if (Number.isNaN(port)) {
     throw new TypeError(`Valor de PORT inválido: ${portEnv}`);
   }
-  // const nodeEnv = configService.get<string>('NODE_ENV', 'development');
-  // const corsOriginLocal = configService.get<string>(
-  //   'CORS_ORIGIN_LOCAL',
-  //   'http://localhost:3000',
-  // );
-  // const corsOriginProduction = configService.get<string>(
-  //   'CORS_ORIGIN_PRODUCTION',
-  //   'https://your-frontend-domain.com',
-  // );
+  const nodeEnv = configService.get<string>('NODE_ENV', 'development');
+  const corsOriginLocal = configService.get<string>(
+    'CORS_ORIGIN_LOCAL',
+    'http://localhost:3000',
+  );
+  const corsOriginProduction = configService.get<string>(
+    'CORS_ORIGIN_PRODUCTION',
+    'https://your-frontend-domain.com',
+  );
 
-  // const corsOrigin =
-  //   nodeEnv === 'production' ? corsOriginProduction : corsOriginLocal;
+  const corsOrigin =
+    nodeEnv === 'production' ? corsOriginProduction : corsOriginLocal;
 
-  // app.enableCors({
-  //   origin: corsOrigin,
-  //   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  //   allowedHeaders: ['Content-Type', 'Authorization'],
-  //   credentials: true,
-  // });
-
-  app.enableCors({ origin: '*' });
+  app.enableCors({
+    origin: corsOrigin,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    credentials: true,
+  });
 
   const config = new DocumentBuilder()
     .setTitle('Sales Microservice API')

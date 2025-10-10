@@ -1,12 +1,4 @@
-import {
-  Controller,
-  Get,
-  Body,
-  Param,
-  ParseIntPipe,
-  Patch,
-  Post,
-} from '@nestjs/common';
+import { Controller, Get, Body, Param, Patch, Post } from '@nestjs/common';
 import { VendaService } from '../service/venda.service';
 import { CreateVendaDto } from '../dto/create-venda.dto';
 import { ApiTags, ApiOperation, ApiBody, ApiParam } from '@nestjs/swagger';
@@ -21,6 +13,7 @@ export class VendaController {
   @ApiOperation({ summary: 'Realizar uma venda' })
   @ApiBody({ type: CreateVendaDto })
   vender(@Body() body: CreateVendaDto) {
+    console.log('chegou aquiii');
     const { clienteId, veiculoId, preco, moeda } = body as any;
     return this.vendaService.realizarVenda(clienteId, veiculoId, preco, moeda);
   }
@@ -34,20 +27,20 @@ export class VendaController {
   @Get('veiculo/:veiculoId')
   @ApiOperation({ summary: 'Obter venda por ID do veículo' })
   @ApiParam({ name: 'veiculoId', type: 'number', description: 'ID do veículo' })
-  obterVendaPorVeiculo(@Param('veiculoId', ParseIntPipe) veiculoId: number) {
-    return this.vendaService.obterVendaPorVeiculoId(veiculoId);
+  obterVendaPorVeiculo(@Param('veiculoId') veiculoId: string) {
+    return this.vendaService.obterVendaPorVeiculoId(Number(veiculoId));
   }
 
-  @Patch('veiculo/:veiculoId/pagamento')
-  @ApiOperation({ summary: 'Atualizar status de pagamento e preço da venda' })
-  @ApiParam({ name: 'veiculoId', type: 'number', description: 'ID do veículo' })
+  @Patch('pagamento')
+  @ApiOperation({
+    summary:
+      'Atualizar status de pagamento e preço da venda por código de pagamento',
+  })
   @ApiBody({ type: UpdatePagamentoDto })
-  atualizarPagamento(
-    @Param('veiculoId', ParseIntPipe) veiculoId: number,
-    @Body() body: Omit<UpdatePagamentoDto, 'veiculoId'>,
-  ) {
-    const { statusPagamento, preco } = body;
-    return this.vendaService.atualizarPagamentoPorVeiculo(veiculoId, {
+  atualizarPagamento(@Body() body: UpdatePagamentoDto) {
+    console.log(body, 'body');
+    const { statusPagamento, preco, codigoPagamento } = body;
+    return this.vendaService.atualizarPagamentoPorCodigo(codigoPagamento, {
       statusPagamento,
       preco,
     });
