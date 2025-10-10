@@ -13,7 +13,6 @@ export class VendaController {
   @ApiOperation({ summary: 'Realizar uma venda' })
   @ApiBody({ type: CreateVendaDto })
   vender(@Body() body: CreateVendaDto) {
-    console.log('chegou aquiii');
     const { clienteId, veiculoId, preco, moeda } = body as any;
     return this.vendaService.realizarVenda(clienteId, veiculoId, preco, moeda);
   }
@@ -31,15 +30,22 @@ export class VendaController {
     return this.vendaService.obterVendaPorVeiculoId(Number(veiculoId));
   }
 
-  @Patch('pagamento')
+  @Patch('pagamento/:codigoPagamento')
   @ApiOperation({
     summary:
       'Atualizar status de pagamento e preço da venda por código de pagamento',
   })
+  @ApiParam({
+    name: 'codigoPagamento',
+    type: 'string',
+    description: 'Código do pagamento',
+  })
   @ApiBody({ type: UpdatePagamentoDto })
-  atualizarPagamento(@Body() body: UpdatePagamentoDto) {
-    console.log(body, 'body');
-    const { statusPagamento, preco, codigoPagamento } = body;
+  atualizarPagamento(
+    @Param('codigoPagamento') codigoPagamento: string,
+    @Body() body: UpdatePagamentoDto,
+  ) {
+    const { statusPagamento, preco } = body;
     return this.vendaService.atualizarPagamentoPorCodigo(codigoPagamento, {
       statusPagamento,
       preco,
